@@ -1,0 +1,28 @@
+name: Connect to VM with PEM File
+
+on:
+  push:
+    branches:
+      - main  # Or whichever branch you want to trigger this workflow
+
+jobs:
+  connect_to_vm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Decode PEM file
+        run: |
+          echo "${{ secrets.PEMFILE }}" | base64 --decode > ~/.ssh/aws-key.pem
+          chmod 600 ~/.ssh/aws-key.pem
+
+      - name: Set up SSH config
+        run: |
+          mkdir -p ~/.ssh
+          echo -e "Host vm\n  HostName ${ { secrets.VMIP } }\n  User ${ { secrets.VMUSER } }\n  IdentityFile ~/.ssh/aws-key.pem\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+
+      - name: Connect to VM and run a command
+        run: |
+          ssh -i ~/.ssh/aws-key.pem ${ { secrets.VM_USER } }@${ { secrets.VM_IP } } "echo 'Successfully connected to the VM!'"
