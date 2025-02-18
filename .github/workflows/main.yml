@@ -1,34 +1,34 @@
-name: Connect to VM with PEM File
+name: Deploy
 
 on:
   push:
-    branches:
-      - main  # Or whichever branch you want to trigger this workflow
+    branches: [ main ]
 
 jobs:
-  connect_to_vm:
+  Deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up SSH agent and add private key from secrets
+      - uses: actions/checkout@v2 
+      - name: Build & Deploy
+        env:
+            PRIVATE_KEY: ${{ secrets.PEMFILE }}
+            HOSTNAME: ${{secrets.VMHOST}}
+            USER_NAME: ${{secrets.VMUSER}}
+      
         run: |
-          # Start the SSH agent
-          eval "$(ssh-agent -s)"
-          
-          # Ensure the private key is decoded and added to the agent correctly
-          echo "${{ secrets.PEMFILE }}" > /tmp/aws-key.pem
-          chmod 600 /tmp/aws-key.pem
-          ssh-add /tmp/aws-key.pem
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
 
-      - name: Set up SSH config
-        run: |
-          mkdir -p ~/.ssh
-          echo -e "Host vm\n  HostName ${ { secrets.VMHOST } }\n  User ${ { secrets.VMUSER } }\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
-
-      - name: Connect to VM and run a command
-        run: |
-          # SSH into the VM using the SSH agent (no need to specify key)
-          ssh ${ { secrets.VMUSER } }@${ { secrets.VMHOST } } "echo 'Successfully connected to the VM!'"
+              # Now we have got the access of EC2 and we will start the deploy .
+              cd /home/ubuntu/<PROJECT_DIRECTORY> &&
+              git checkout dev &&
+              git fetch --all &&
+              git reset --hard origin/dev &&
+              git pull origin dev &&
+              sudo npm i &&
+              sudo npm run build &&
+              sudo pm2 stop ./dist/index.js &&
+              sudo pm2 start ./dist/index.js
+              '
