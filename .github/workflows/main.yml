@@ -21,8 +21,8 @@ jobs:
       - name: Set up SSH config
         run: |
           mkdir -p ~/.ssh
-          echo -e "Host vm\n  HostName ${ { secrets.VMIP } }\n  User ${ { secrets.VMUSER } }\n  IdentityFile ~/.ssh/aws-key.pem\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          echo -e "Host vm\n  HostName ${ { secrets.VMHOST } }\n  User ${ { secrets.VMUSER } }\n  IdentityFile ~/.ssh/aws-key.pem\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
 
       - name: Connect to VM and run a command
         run: |
-          ssh -i ~/.ssh/aws-key.pem ${ { secrets.VM_USER } }@${ { secrets.VM_IP } } "echo 'Successfully connected to the VM!'"
+          ssh -i ~/.ssh/aws-key.pem ${ { secrets.VMUSER } }@${ { secrets.VMHOST } } "echo 'Successfully connected to the VM!'"
