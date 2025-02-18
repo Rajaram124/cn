@@ -13,16 +13,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Decode PEM file
+      - name: Set up SSH agent and add private key from secrets
         run: |
-          echo "${{ secrets.PEMFILE }}" | base64 --decode > ~/.ssh/aws-key.pem
-          chmod 600 ~/.ssh/aws-key.pem
+          # Start the SSH agent
+          eval "$(ssh-agent -s)"
+          
+          # Add the decoded PEM file directly from the secret to the SSH agent
+          echo "${{ secrets.PEMFILE }}" | ssh-add - <<< ""
 
       - name: Set up SSH config
         run: |
           mkdir -p ~/.ssh
-          echo -e "Host vm\n  HostName ${ { secrets.VMHOST } }\n  User ${ { secrets.VMUSER } }\n  IdentityFile ~/.ssh/aws-key.pem\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          echo -e "Host vm\n  HostName ${ { secrets.VMHOST } }\n  User ${ { secrets.VMUSER } }\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
 
       - name: Connect to VM and run a command
         run: |
-          ssh -i ~/.ssh/aws-key.pem ${ { secrets.VMUSER } }@${ { secrets.VMHOST } } "echo 'Successfully connected to the VM!'"
+          # SSH into the VM using the SSH agent (no need to specify key)
+          ssh ${ { secrets.VMUSER } }@${ { secrets.VMHOST } } "echo 'Successfully connected to the VM!'"
