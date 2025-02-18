@@ -18,8 +18,10 @@ jobs:
           # Start the SSH agent
           eval "$(ssh-agent -s)"
           
-          # Add the decoded PEM file directly from the secret to the SSH agent
-          echo "${{ secrets.PEM_FILE }}" | base64 --decode | ssh-add -
+          # Ensure the private key is decoded and added to the agent correctly
+          echo "${{ secrets.PEMFILE }}" > /tmp/aws-key.pem
+          chmod 600 /tmp/aws-key.pem
+          ssh-add /tmp/aws-key.pem
 
       - name: Set up SSH config
         run: |
